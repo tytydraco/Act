@@ -1,6 +1,5 @@
 package com.draco.act.models
 
-import android.content.ComponentName
 import android.graphics.drawable.Drawable
 
 data class Activity(

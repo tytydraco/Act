@@ -1,18 +1,10 @@
 package com.draco.act.views
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.pm.ComponentInfo
-import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.draco.act.R
 import com.draco.act.databinding.ActivityMainBinding
-import com.draco.act.models.Activity
 import com.draco.act.recyclers.ActivityRecyclerAdapter
 import com.draco.act.viewmodels.MainActivityViewModel
 
@@ -25,12 +17,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.getAllActivities(packageManager) { activityList ->
-            binding.recycler.apply {
-                adapter = ActivityRecyclerAdapter(this@MainActivity, activityList)
-                layoutManager = LinearLayoutManager(this@MainActivity)
-                setHasFixedSize(true)
-            }
+        val a = ActivityRecyclerAdapter(this@MainActivity, mutableListOf())
+
+        binding.recycler.apply {
+            adapter = a
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            setHasFixedSize(true)
         }
+
+        viewModel.activityList.observe(this) {
+            if (it == null)
+                return@observe
+            a.activities = it
+            a.notifyDataSetChanged()
+        }
+
+        viewModel.getAllActivities(this)
     }
 }

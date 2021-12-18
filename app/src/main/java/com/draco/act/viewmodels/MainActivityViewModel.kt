@@ -2,8 +2,13 @@ package com.draco.act.viewmodels
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.draco.act.models.Activity
 import kotlinx.coroutines.Dispatchers
@@ -11,13 +16,16 @@ import kotlinx.coroutines.launch
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val _activityList = MutableLiveData<MutableList<Activity>>(mutableListOf())
+    val activityList: LiveData<MutableList<Activity>> = _activityList
+
     /**
      * Find all package activities that are available to us
      */
-    fun getAllActivities(packageManager: PackageManager, callback: (List<Activity>) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val activityList = mutableListOf<Activity>()
+    fun getAllActivities(context: Context) {
+        val packageManager = context.packageManager
 
+        viewModelScope.launch(Dispatchers.IO) {
             val packages = packageManager.getInstalledPackages(PackageManager.GET_ACTIVITIES)
             for (packageInfo in packages) {
                 val activities = packageInfo.activities
@@ -34,12 +42,28 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     val icon = activityInfo.loadIcon(packageManager)
                     val activityLabel = activityInfo.loadLabel(packageManager).toString()
 
+                    if (!activityInfo.exported)
+                        continue
+
+                    activityInfo.permission?.let {
+
+                    }
+
+                    if (activityInfo.permission != null &&
+                        ContextCompat.checkSelfPermission(context, activityInfo.permission) != PackageManager.PERMISSION_GRANTED) {
+                            continue
+                    }
+
+                    activityInfo.permission?.also {
+                        Log.d("PERM", it)
+                    }
+
                     val displayName = if (activityLabel != packageLabel)
                         activityLabel
                     else
                         packageLabel
 
-                    activityList.add(
+                    _activityList.value?.add(
                         Activity(
                             displayName,
                             packageLabel,
@@ -49,16 +73,14 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                         )
                     )
                 }
-            }
 
-            activityList.sortWith(
-                compareBy<Activity> { it.packageLabel }
-                    .thenBy { it.displayLabel }
-                    .thenBy { it.activity }
-            )
+                _activityList.value?.sortWith(
+                    compareBy<Activity> { it.packageLabel }
+                        .thenBy { it.displayLabel }
+                        .thenBy { it.activity }
+                )
 
-            viewModelScope.launch {
-                callback(activityList)
+                _activityList.postValue(_activityList.value)
             }
         }
     }

@@ -12,7 +12,7 @@ import com.draco.act.models.Activity
 
 class ActivityRecyclerAdapter(
     private val context: Context,
-    private val activities: List<Activity>
+    var activities: MutableList<Activity>
 ): RecyclerView.Adapter<ActivityRecyclerAdapter.ViewHolder>() {
     inner class ViewHolder(val binding: ActivityItemBinding): RecyclerView.ViewHolder(binding.root)
 
@@ -27,14 +27,19 @@ class ActivityRecyclerAdapter(
         holder.binding.img.setImageDrawable(activity.icon)
 
         val intent = Intent()
-            .setComponent(ComponentName(activity.packageId, activity.packageId))
+            .setComponent(ComponentName(activity.packageId, activity.activity))
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         holder.itemView.setOnClickListener {
             try {
                 context.startActivity(intent)
-            } catch (_: ActivityNotFoundException) {}
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+            }
         }
     }
 
     override fun getItemCount() = activities.size
+
+    override fun getItemId(position: Int) = activities[position].hashCode().toLong()
 }
