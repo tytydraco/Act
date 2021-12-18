@@ -10,11 +10,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.draco.act.databinding.ActivityItemBinding
 import com.draco.act.models.Activity
 
-class ActivityRecyclerAdapter(
+class AddRecyclerAdapter(
     private val context: Context,
     var activities: MutableList<Activity>
-): RecyclerView.Adapter<ActivityRecyclerAdapter.ViewHolder>() {
+): RecyclerView.Adapter<AddRecyclerAdapter.ViewHolder>() {
     inner class ViewHolder(val binding: ActivityItemBinding): RecyclerView.ViewHolder(binding.root)
+
+    var starToggle: ((Int) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(ActivityItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -24,7 +26,12 @@ class ActivityRecyclerAdapter(
         val activity = activities[position]
         holder.binding.label.text = activity.displayLabel
         holder.binding.activity.text = activity.activity
-        holder.binding.img.setImageDrawable(activity.icon)
+
+        if (activity.starred) {
+            holder.binding.img.setImageDrawable(null)
+        } else {
+            holder.binding.img.setImageDrawable(activity.icon)
+        }
 
         val intent = Intent()
             .setComponent(ComponentName(activity.packageId, activity.activity))
@@ -36,6 +43,11 @@ class ActivityRecyclerAdapter(
             } catch (e: ActivityNotFoundException) {
                 e.printStackTrace()
             }
+        }
+
+        holder.itemView.setOnLongClickListener {
+            starToggle?.invoke(position)
+            return@setOnLongClickListener true
         }
     }
 

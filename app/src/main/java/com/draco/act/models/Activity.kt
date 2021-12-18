@@ -7,5 +7,6 @@ data class Activity(
     val packageLabel: String,
     val packageId: String,
     val activity: String,
-    val icon: Drawable
+    val icon: Drawable,
+    var starred: Boolean = false
 )
