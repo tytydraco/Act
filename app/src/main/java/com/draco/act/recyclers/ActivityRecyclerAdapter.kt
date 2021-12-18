@@ -22,7 +22,7 @@ class ActivityRecyclerAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val activity = activities[position]
-        holder.binding.label.text = activity.packageLabel
+        holder.binding.label.text = activity.displayLabel
         holder.binding.activity.text = activity.activity
         holder.binding.img.setImageDrawable(activity.icon)
 

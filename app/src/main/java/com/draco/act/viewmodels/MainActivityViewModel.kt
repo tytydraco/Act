@@ -29,11 +29,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 val packageLabel = packageManager.getApplicationLabel(applicationInfo).toString()
 
                 for (activity in activities) {
-                    val targetActivity = activity.targetActivity
-
-                    if (targetActivity.isNullOrEmpty())
-                        continue
-
                     val componentName = ComponentName(packageInfo.packageName, activity.name)
                     val activityInfo = packageManager.getActivityInfo(componentName, 0)
                     val icon = activityInfo.loadIcon(packageManager)
@@ -47,6 +42,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     activityList.add(
                         Activity(
                             displayName,
+                            packageLabel,
                             activityInfo.packageName,
                             activityInfo.name,
                             icon
@@ -54,6 +50,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     )
                 }
             }
+
+            activityList.sortWith(
+                compareBy<Activity> { it.packageLabel }
+                    .thenBy { it.displayLabel }
+                    .thenBy { it.activity }
+            )
 
             viewModelScope.launch {
                 callback(activityList)
