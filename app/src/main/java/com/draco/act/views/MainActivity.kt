@@ -35,8 +35,13 @@ class MainActivity : AppCompatActivity() {
         a.starToggle = {
             a.activities[it].starred = !a.activities[it].starred
             a.sort()
+
+            viewModel.save()
         }
 
-        viewModel.getAllActivities(this)
+        if (!viewModel.load())
+            viewModel.getAllActivities(this)
+        else
+            a.sort()
     }
 }

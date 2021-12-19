@@ -10,6 +10,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.room.Room
+import com.draco.act.database.AppDatabase
 import com.draco.act.models.Activity
 import com.draco.act.recyclers.ActivityRecyclerAdapter
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +21,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     private val _activityList = MutableLiveData<MutableList<Activity>>(mutableListOf())
     val activityList: LiveData<MutableList<Activity>> = _activityList
+
+    val db = Room.databaseBuilder(
+        application.applicationContext,
+        AppDatabase::class.java, "database"
+    ).build()
 
     /**
      * Find all package activities that are available to us
@@ -82,5 +89,18 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 _activityList.postValue(activityList)
             }
         }
+    }
+
+    fun save() {
+        db.clearAllTables()
+        db.activityDao().insertAll(activityList.value ?: emptyList())
+    }
+
+    fun load(): Boolean {
+        val savedList = db.activityDao().getAll()
+        if (savedList.isEmpty())
+            return false
+        _activityList.postValue(savedList.toMutableList())
+        return true
     }
 }
