@@ -10,13 +10,25 @@ import androidx.recyclerview.widget.RecyclerView
 import com.draco.act.databinding.ActivityItemBinding
 import com.draco.act.models.Activity
 
-class AddRecyclerAdapter(
+class ActivityRecyclerAdapter(
     private val context: Context,
     var activities: MutableList<Activity>
-): RecyclerView.Adapter<AddRecyclerAdapter.ViewHolder>() {
+): RecyclerView.Adapter<ActivityRecyclerAdapter.ViewHolder>() {
+    companion object {
+        val sortComparator = compareBy<Activity> { !it.starred }
+            .thenBy { it.packageLabel }
+            .thenBy { it.displayLabel }
+            .thenBy { it.activity }
+    }
+
     inner class ViewHolder(val binding: ActivityItemBinding): RecyclerView.ViewHolder(binding.root)
 
     var starToggle: ((Int) -> Unit)? = null
+
+    fun sort() {
+        activities.sortWith(sortComparator)
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(ActivityItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -27,11 +39,10 @@ class AddRecyclerAdapter(
         holder.binding.label.text = activity.displayLabel
         holder.binding.activity.text = activity.activity
 
-        if (activity.starred) {
+        if (activity.starred)
             holder.binding.img.setImageDrawable(null)
-        } else {
+        else
             holder.binding.img.setImageDrawable(activity.icon)
-        }
 
         val intent = Intent()
             .setComponent(ComponentName(activity.packageId, activity.activity))
