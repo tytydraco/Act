@@ -3,6 +3,7 @@ package com.draco.act.viewmodels
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -16,14 +17,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val _activityList = MutableLiveData<MutableList<Activity>>(mutableListOf())
-    val activityList: LiveData<MutableList<Activity>> = _activityList
-
     /**
      * Find all package activities that are available to us
      */
-    fun getAllActivities(context: Context) {
+    fun getAllActivities(context: Context, starred: Set<String>, callback: (List<Activity>) -> Unit) {
         val packageManager = context.packageManager
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -48,17 +45,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     if (!activityInfo.exported)
                         continue
 
-                    activityInfo.permission?.let {
-
-                    }
-
                     if (activityInfo.permission != null &&
                         ContextCompat.checkSelfPermission(context, activityInfo.permission) != PackageManager.PERMISSION_GRANTED) {
                             continue
-                    }
-
-                    activityInfo.permission?.also {
-                        Log.d("PERM", it)
                     }
 
                     val displayName = if (activityLabel != packageLabel)
@@ -66,21 +55,39 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     else
                         packageLabel
 
+                    val isStarred = starred.contains(activityInfo.name)
+
                     activityList.add(
                         Activity(
                             displayName,
                             packageLabel,
                             activityInfo.packageName,
                             activityInfo.name,
-                            icon
+                            icon,
+                            isStarred
                         )
                     )
-
-                    activityList.sortWith(ActivityRecyclerAdapter.sortComparator)
                 }
-
-                _activityList.postValue(activityList)
             }
+
+            activityList.sortWith(ActivityRecyclerAdapter.sortComparator)
+            callback.invoke(activityList)
         }
+    }
+
+    fun save(sharedPrefs: SharedPreferences, activityList: List<Activity>) {
+        val starred = activityList
+            .mapNotNull {
+                if (it.starred)
+                    it.activity
+                else
+                    null
+            }
+            .toSet()
+
+        sharedPrefs
+            .edit()
+            .putStringSet("starred", starred)
+            .apply()
     }
 }

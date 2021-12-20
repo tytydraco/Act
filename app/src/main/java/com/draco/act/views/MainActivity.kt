@@ -1,5 +1,7 @@
 package com.draco.act.views
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -12,31 +14,34 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
 
+    private lateinit var sharedPrefs: SharedPreferences
+    private lateinit var activityRecyclerAdapter: ActivityRecyclerAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val a = ActivityRecyclerAdapter(this@MainActivity, mutableListOf())
-        a.setHasStableIds(true)
+        sharedPrefs = getPreferences(Context.MODE_PRIVATE)
+
+        activityRecyclerAdapter = ActivityRecyclerAdapter(this@MainActivity, mutableListOf())
+        activityRecyclerAdapter.setHasStableIds(true)
 
         binding.recycler.apply {
-            adapter = a
+            adapter = activityRecyclerAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
-        viewModel.activityList.observe(this) {
-            if (it == null)
-                return@observe
-            a.activities = it
-            a.notifyDataSetChanged()
+        val starred = sharedPrefs.getStringSet("starred", null) ?: emptySet()
+        viewModel.getAllActivities(this, starred) {
+            runOnUiThread {
+                activityRecyclerAdapter.updateActivityList(it)
+            }
         }
+    }
 
-        a.starToggle = {
-            a.activities[it].starred = !a.activities[it].starred
-            a.sort()
-        }
-
-        viewModel.getAllActivities(this)
+    override fun onPause() {
+        super.onPause()
+        viewModel.save(sharedPrefs, activityRecyclerAdapter.getActivityList())
     }
 }

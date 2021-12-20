@@ -12,7 +12,7 @@ import com.draco.act.models.Activity
 
 class ActivityRecyclerAdapter(
     private val context: Context,
-    var activities: MutableList<Activity>
+    private var activities: MutableList<Activity>
 ): RecyclerView.Adapter<ActivityRecyclerAdapter.ViewHolder>() {
     companion object {
         val sortComparator = compareBy<Activity> { !it.starred }
@@ -23,12 +23,20 @@ class ActivityRecyclerAdapter(
 
     inner class ViewHolder(val binding: ActivityItemBinding): RecyclerView.ViewHolder(binding.root)
 
-    var starToggle: ((Int) -> Unit)? = null
-
+    @Synchronized
     fun sort() {
         activities.sortWith(sortComparator)
         notifyDataSetChanged()
     }
+
+    @Synchronized
+    fun updateActivityList(newList: List<Activity>) {
+        activities = newList.toMutableList()
+        notifyDataSetChanged()
+    }
+
+    @Synchronized
+    fun getActivityList() = activities
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(ActivityItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -57,7 +65,8 @@ class ActivityRecyclerAdapter(
         }
 
         holder.itemView.setOnLongClickListener {
-            starToggle?.invoke(position)
+            activities[position].starred = !activities[position].starred
+            sort()
             return@setOnLongClickListener true
         }
     }
