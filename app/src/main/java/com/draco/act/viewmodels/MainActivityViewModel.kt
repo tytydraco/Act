@@ -70,7 +70,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 }
             }
 
-            activityList.sortWith(ActivityRecyclerAdapter.sortComparator)
+            activityList.sortWith(Activity.sortComparator)
             callback.invoke(activityList)
         }
     }

@@ -9,4 +9,11 @@ data class Activity(
     val activity: String,
     val icon: Drawable,
     var starred: Boolean = false
-)
+) {
+    companion object {
+        val sortComparator = compareBy<Activity> { !it.starred }
+            .thenBy { it.packageLabel }
+            .thenBy { it.displayLabel }
+            .thenBy { it.activity }
+    }
+}

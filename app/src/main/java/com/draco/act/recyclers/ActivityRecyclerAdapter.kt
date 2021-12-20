@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -14,28 +15,18 @@ class ActivityRecyclerAdapter(
     private val context: Context,
     private var activities: MutableList<Activity>
 ): RecyclerView.Adapter<ActivityRecyclerAdapter.ViewHolder>() {
-    companion object {
-        val sortComparator = compareBy<Activity> { !it.starred }
-            .thenBy { it.packageLabel }
-            .thenBy { it.displayLabel }
-            .thenBy { it.activity }
-    }
-
     inner class ViewHolder(val binding: ActivityItemBinding): RecyclerView.ViewHolder(binding.root)
 
-    @Synchronized
     fun sort() {
-        activities.sortWith(sortComparator)
+        activities.sortWith(Activity.sortComparator)
         notifyDataSetChanged()
     }
 
-    @Synchronized
     fun updateActivityList(newList: List<Activity>) {
         activities = newList.toMutableList()
         notifyDataSetChanged()
     }
 
-    @Synchronized
     fun getActivityList() = activities
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -47,10 +38,15 @@ class ActivityRecyclerAdapter(
         holder.binding.label.text = activity.displayLabel
         holder.binding.activity.text = activity.activity
 
-        if (activity.starred)
-            holder.binding.img.setImageDrawable(null)
-        else
-            holder.binding.img.setImageDrawable(activity.icon)
+        holder.binding.img.setImageDrawable(activity.icon)
+
+        if (activity.starred) {
+            holder.binding.label.typeface = Typeface.DEFAULT_BOLD
+            holder.binding.activity.typeface = Typeface.DEFAULT_BOLD
+        } else {
+            holder.binding.label.typeface = Typeface.DEFAULT
+            holder.binding.activity.typeface = Typeface.DEFAULT
+        }
 
         val intent = Intent()
             .setComponent(ComponentName(activity.packageId, activity.activity))
